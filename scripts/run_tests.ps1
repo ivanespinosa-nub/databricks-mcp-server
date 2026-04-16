@@ -2,6 +2,7 @@
 # Run tests for the Databricks MCP server
 
 param(
+    [ValidatePattern('^[\w./\-]+$')]
     [string]$TestPath = "tests/",
     [switch]$Coverage,
     [switch]$Verbose
@@ -34,7 +35,8 @@ if ($Coverage) {
 $cmd += " $TestPath"
 
 Write-Host "Running: $cmd"
-Invoke-Expression $cmd
+# Use & operator with explicit argument list to avoid injection via Invoke-Expression
+& uv run pytest $(if ($Verbose) { "-v" }) $(if ($Coverage) { "--cov=src", "--cov-report=term-missing" }) $TestPath
 
 # Print summary
 Write-Host "`nTest run completed at $(Get-Date)" 

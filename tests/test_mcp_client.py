@@ -30,15 +30,14 @@ async def run_tests():
     # IMPORTANT: In MCP, the client launches the server process
     # We don't connect to an already running server!
     
-    # Define the environment variables the server needs
-    env = os.environ.copy()
-    
-    # Create parameters for connecting to the server
-    # This will launch the server using the PowerShell script
+    # Pass only the variables the server explicitly needs — never the full environment.
+    _required = ("DATABRICKS_HOST", "DATABRICKS_TOKEN", "MCP_API_KEY")
+    env = {k: os.environ[k] for k in _required if k in os.environ}
+
     params = StdioServerParameters(
-        command="pwsh",  # Use PowerShell
-        args=["-File", "./scripts/start_server.ps1"],  # Run the startup script
-        env=env  # Pass environment variables
+        command="pwsh",
+        args=["-File", "./scripts/start_server.ps1"],
+        env=env,
     )
     
     # Use the client to start the server and connect to it

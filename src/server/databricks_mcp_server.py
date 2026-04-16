@@ -52,7 +52,7 @@ class DatabricksMCPServer(FastMCP):
             description="List all Databricks clusters",
         )
         async def list_clusters(params: Dict[str, Any]) -> List[TextContent]:
-            logger.info(f"Listing clusters with params: {params}")
+            logger.info("Tool called: list_clusters")
             try:
                 result = await clusters.list_clusters()
                 return [{"text": json.dumps(result)}]
@@ -65,7 +65,7 @@ class DatabricksMCPServer(FastMCP):
             description="Create a new Databricks cluster with parameters: cluster_name (required), spark_version (required), node_type_id (required), num_workers, autotermination_minutes",
         )
         async def create_cluster(params: Dict[str, Any]) -> List[TextContent]:
-            logger.info(f"Creating cluster with params: {params}")
+            logger.info("Tool called: create_cluster")
             try:
                 result = await clusters.create_cluster(params)
                 return [{"text": json.dumps(result)}]
@@ -78,7 +78,7 @@ class DatabricksMCPServer(FastMCP):
             description="Terminate a Databricks cluster with parameter: cluster_id (required)",
         )
         async def terminate_cluster(params: Dict[str, Any]) -> List[TextContent]:
-            logger.info(f"Terminating cluster with params: {params}")
+            logger.info("Tool called: terminate_cluster")
             try:
                 result = await clusters.terminate_cluster(params.get("cluster_id"))
                 return [{"text": json.dumps(result)}]
@@ -91,7 +91,7 @@ class DatabricksMCPServer(FastMCP):
             description="Get information about a specific Databricks cluster with parameter: cluster_id (required)",
         )
         async def get_cluster(params: Dict[str, Any]) -> List[TextContent]:
-            logger.info(f"Getting cluster info with params: {params}")
+            logger.info("Tool called: get_cluster")
             try:
                 result = await clusters.get_cluster(params.get("cluster_id"))
                 return [{"text": json.dumps(result)}]
@@ -104,7 +104,7 @@ class DatabricksMCPServer(FastMCP):
             description="Start a terminated Databricks cluster with parameter: cluster_id (required)",
         )
         async def start_cluster(params: Dict[str, Any]) -> List[TextContent]:
-            logger.info(f"Starting cluster with params: {params}")
+            logger.info("Tool called: start_cluster")
             try:
                 result = await clusters.start_cluster(params.get("cluster_id"))
                 return [{"text": json.dumps(result)}]
@@ -118,7 +118,7 @@ class DatabricksMCPServer(FastMCP):
             description="List all Databricks jobs",
         )
         async def list_jobs(params: Dict[str, Any]) -> List[TextContent]:
-            logger.info(f"Listing jobs with params: {params}")
+            logger.info("Tool called: list_jobs")
             try:
                 result = await jobs.list_jobs()
                 return [{"text": json.dumps(result)}]
@@ -131,7 +131,7 @@ class DatabricksMCPServer(FastMCP):
             description="Run a Databricks job with parameters: job_id (required), notebook_params (optional)",
         )
         async def run_job(params: Dict[str, Any]) -> List[TextContent]:
-            logger.info(f"Running job with params: {params}")
+            logger.info("Tool called: run_job")
             try:
                 notebook_params = params.get("notebook_params", {})
                 result = await jobs.run_job(params.get("job_id"), notebook_params)
@@ -146,7 +146,7 @@ class DatabricksMCPServer(FastMCP):
             description="List notebooks in a workspace directory with parameter: path (required)",
         )
         async def list_notebooks(params: Dict[str, Any]) -> List[TextContent]:
-            logger.info(f"Listing notebooks with params: {params}")
+            logger.info("Tool called: list_notebooks")
             try:
                 result = await notebooks.list_notebooks(params.get("path"))
                 return [{"text": json.dumps(result)}]
@@ -159,7 +159,7 @@ class DatabricksMCPServer(FastMCP):
             description="Export a notebook from the workspace with parameters: path (required), format (optional, one of: SOURCE, HTML, JUPYTER, DBC)",
         )
         async def export_notebook(params: Dict[str, Any]) -> List[TextContent]:
-            logger.info(f"Exporting notebook with params: {params}")
+            logger.info("Tool called: export_notebook")
             try:
                 format_type = params.get("format", "SOURCE")
                 result = await notebooks.export_notebook(params.get("path"), format_type)
@@ -181,7 +181,7 @@ class DatabricksMCPServer(FastMCP):
             description="List files and directories in a DBFS path with parameter: dbfs_path (required)",
         )
         async def list_files(params: Dict[str, Any]) -> List[TextContent]:
-            logger.info(f"Listing files with params: {params}")
+            logger.info("Tool called: list_files")
             try:
                 result = await dbfs.list_files(params.get("dbfs_path"))
                 return [{"text": json.dumps(result)}]
@@ -195,14 +195,14 @@ class DatabricksMCPServer(FastMCP):
             description="Execute a SQL statement with parameters: statement (required), warehouse_id (required), catalog (optional), schema (optional)",
         )
         async def execute_sql(params: Dict[str, Any]) -> List[TextContent]:
-            logger.info(f"Executing SQL with params: {params}")
+            logger.info("Tool called: execute_sql (statement content redacted)")
             try:
                 statement = params.get("statement")
                 warehouse_id = params.get("warehouse_id")
                 catalog = params.get("catalog")
                 schema = params.get("schema")
-                
-                result = await sql.execute_sql(statement, warehouse_id, catalog, schema)
+
+                result = await sql.execute_statement(statement, warehouse_id, catalog, schema)
                 return [{"text": json.dumps(result)}]
             except Exception as e:
                 logger.error(f"Error executing SQL: {str(e)}")

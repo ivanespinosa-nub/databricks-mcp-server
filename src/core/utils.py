@@ -54,7 +54,19 @@ def make_api_request(
     """
     url = get_databricks_api_url(endpoint)
     headers = get_api_headers()
-    
+
+    # Enforce that every outbound request targets the configured Databricks host only.
+    # This prevents any code path from contacting arbitrary external servers.
+    from urllib.parse import urlparse
+    from src.core.config import settings as _settings
+    _allowed_host = urlparse(_settings.DATABRICKS_HOST).netloc
+    _request_host = urlparse(url).netloc
+    if _request_host != _allowed_host:
+        raise ValueError(
+            f"Outbound request blocked: target host '{_request_host}' is not the "
+            f"configured Databricks host '{_allowed_host}'"
+        )
+
     try:
         # Log the request (omit sensitive information)
         safe_data = "**REDACTED**" if data else None
@@ -63,7 +75,8 @@ def make_api_request(
         # Convert data to JSON string if provided
         json_data = json.dumps(data) if data and not files else data
         
-        # Make the request
+        # Make the request — enforce a timeout so a slow/malicious endpoint
+        # cannot hang the server indefinitely.
         response = requests.request(
             method=method,
             url=url,
@@ -71,6 +84,7 @@ def make_api_request(
             params=params,
             data=json_data if not files else data,
             files=files,
+            timeout=30,
         )
         
         # Check for HTTP errors
