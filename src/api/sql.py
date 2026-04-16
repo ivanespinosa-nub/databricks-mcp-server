@@ -38,7 +38,7 @@ async def execute_statement(
     Raises:
         DatabricksAPIError: If the API request fails
     """
-    logger.info(f"Executing SQL statement: {statement[:100]}...")
+    logger.info("Executing SQL statement (content redacted)")
     
     request_data = {
         "statement": statement,
@@ -91,7 +91,7 @@ async def execute_and_wait(
     import asyncio
     import time
     
-    logger.info(f"Executing SQL statement with waiting: {statement[:100]}...")
+    logger.info("Executing SQL statement with waiting (content redacted)")
     
     # Start execution
     response = await execute_statement(

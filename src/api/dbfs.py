@@ -9,8 +9,17 @@ from typing import Any, Dict, List, Optional, BinaryIO
 
 from src.core.utils import DatabricksAPIError, make_api_request
 
-# Configure logging
 logger = logging.getLogger(__name__)
+
+
+def _sanitize_dbfs_path(path: str) -> str:
+    """Validate and normalize a DBFS path. Raises ValueError on traversal attempts."""
+    if not path.startswith("dbfs:/"):
+        raise ValueError(f"DBFS path must start with 'dbfs:/': {path!r}")
+    normalized = os.path.normpath(path)
+    if ".." in normalized.split("/"):
+        raise ValueError(f"Path traversal detected in DBFS path: {path!r}")
+    return normalized
 
 
 async def put_file(
@@ -32,8 +41,9 @@ async def put_file(
     Raises:
         DatabricksAPIError: If the API request fails
     """
+    dbfs_path = _sanitize_dbfs_path(dbfs_path)
     logger.info(f"Uploading file to DBFS path: {dbfs_path}")
-    
+
     # Convert bytes to base64
     content_base64 = base64.b64encode(file_content).decode("utf-8")
     
@@ -70,8 +80,9 @@ async def upload_large_file(
         DatabricksAPIError: If the API request fails
         FileNotFoundError: If the local file does not exist
     """
-    logger.info(f"Uploading large file from {local_file_path} to DBFS path: {dbfs_path}")
-    
+    dbfs_path = _sanitize_dbfs_path(dbfs_path)
+    logger.info(f"Uploading large file to DBFS path: {dbfs_path}")
+
     if not os.path.exists(local_file_path):
         raise FileNotFoundError(f"Local file not found: {local_file_path}")
     
@@ -152,6 +163,7 @@ async def get_file(
     Raises:
         DatabricksAPIError: If the API request fails
     """
+    dbfs_path = _sanitize_dbfs_path(dbfs_path)
     logger.info(f"Reading file from DBFS path: {dbfs_path}")
     
     response = make_api_request(
@@ -187,6 +199,7 @@ async def list_files(dbfs_path: str) -> Dict[str, Any]:
     Raises:
         DatabricksAPIError: If the API request fails
     """
+    dbfs_path = _sanitize_dbfs_path(dbfs_path)
     logger.info(f"Listing files in DBFS path: {dbfs_path}")
     return make_api_request("GET", "/api/2.0/dbfs/list", params={"path": dbfs_path})
 
@@ -208,6 +221,7 @@ async def delete_file(
     Raises:
         DatabricksAPIError: If the API request fails
     """
+    dbfs_path = _sanitize_dbfs_path(dbfs_path)
     logger.info(f"Deleting DBFS path: {dbfs_path}")
     return make_api_request(
         "POST",
@@ -232,6 +246,7 @@ async def get_status(dbfs_path: str) -> Dict[str, Any]:
     Raises:
         DatabricksAPIError: If the API request fails
     """
+    dbfs_path = _sanitize_dbfs_path(dbfs_path)
     logger.info(f"Getting status of DBFS path: {dbfs_path}")
     return make_api_request("GET", "/api/2.0/dbfs/get-status", params={"path": dbfs_path})
 
@@ -249,5 +264,6 @@ async def create_directory(dbfs_path: str) -> Dict[str, Any]:
     Raises:
         DatabricksAPIError: If the API request fails
     """
+    dbfs_path = _sanitize_dbfs_path(dbfs_path)
     logger.info(f"Creating DBFS directory: {dbfs_path}")
     return make_api_request("POST", "/api/2.0/dbfs/mkdirs", data={"path": dbfs_path}) 

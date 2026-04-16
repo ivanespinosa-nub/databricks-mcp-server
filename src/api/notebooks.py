@@ -8,8 +8,23 @@ from typing import Any, Dict, List, Optional
 
 from src.core.utils import DatabricksAPIError, make_api_request
 
-# Configure logging
 logger = logging.getLogger(__name__)
+
+_WORKSPACE_ROOT = "/Users"
+_ALLOWED_PREFIXES = ("/Users", "/Shared", "/Repos")
+
+
+def _sanitize_workspace_path(path: str) -> str:
+    """Validate a workspace path. Raises ValueError on traversal or disallowed roots."""
+    import posixpath
+    normalized = posixpath.normpath(path)
+    if ".." in normalized.split("/"):
+        raise ValueError(f"Path traversal detected in workspace path: {path!r}")
+    if not normalized.startswith(_ALLOWED_PREFIXES):
+        raise ValueError(
+            f"Workspace path must start with one of {_ALLOWED_PREFIXES}: {path!r}"
+        )
+    return normalized
 
 
 async def import_notebook(
@@ -35,6 +50,7 @@ async def import_notebook(
     Raises:
         DatabricksAPIError: If the API request fails
     """
+    path = _sanitize_workspace_path(path)
     logger.info(f"Importing notebook to path: {path}")
     
     # Ensure content is base64 encoded
@@ -71,6 +87,7 @@ async def export_notebook(
     Raises:
         DatabricksAPIError: If the API request fails
     """
+    path = _sanitize_workspace_path(path)
     logger.info(f"Exporting notebook from path: {path}")
     
     params = {
@@ -103,6 +120,7 @@ async def list_notebooks(path: str) -> Dict[str, Any]:
     Raises:
         DatabricksAPIError: If the API request fails
     """
+    path = _sanitize_workspace_path(path)
     logger.info(f"Listing notebooks in path: {path}")
     return make_api_request("GET", "/api/2.0/workspace/list", params={"path": path})
 
@@ -110,17 +128,25 @@ async def list_notebooks(path: str) -> Dict[str, Any]:
 async def delete_notebook(path: str, recursive: bool = False) -> Dict[str, Any]:
     """
     Delete a notebook or directory.
-    
+
     Args:
-        path: The path to delete
-        recursive: Whether to recursively delete directories
-        
+        path: The path to delete (must be under /Users, /Shared, or /Repos)
+        recursive: Whether to recursively delete directories. Disabled by default
+                   and must be explicitly allowed; top-level directories cannot
+                   be recursively deleted.
+
     Returns:
         Empty response on success
-        
+
     Raises:
+        ValueError: If the path is invalid or recursive deletion of a root is attempted.
         DatabricksAPIError: If the API request fails
     """
+    path = _sanitize_workspace_path(path)
+    if recursive and path in _ALLOWED_PREFIXES:
+        raise ValueError(
+            f"Recursive deletion of top-level workspace directory is not allowed: {path!r}"
+        )
     logger.info(f"Deleting path: {path}")
     return make_api_request(
         "POST", 
@@ -142,6 +168,7 @@ async def create_directory(path: str) -> Dict[str, Any]:
     Raises:
         DatabricksAPIError: If the API request fails
     """
+    path = _sanitize_workspace_path(path)
     logger.info(f"Creating directory: {path}")
     return make_api_request("POST", "/api/2.0/workspace/mkdirs", data={"path": path})
 

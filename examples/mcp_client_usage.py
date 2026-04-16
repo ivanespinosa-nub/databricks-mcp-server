@@ -27,14 +27,15 @@ async def connect_and_list_tools():
     """Connect to the Databricks MCP server and list its tools."""
     logger.info("Connecting to Databricks MCP server...")
     
-    # Define the environment variables the server needs
-    env = os.environ.copy()
-    
-    # Create parameters for connecting to the server
+    # Pass only the environment variables the server explicitly needs.
+    # Never forward os.environ wholesale — that leaks unrelated secrets.
+    _required_env_keys = ("DATABRICKS_HOST", "DATABRICKS_TOKEN", "MCP_API_KEY")
+    env = {k: os.environ[k] for k in _required_env_keys if k in os.environ}
+
     params = StdioServerParameters(
-        command="pwsh",  # Use PowerShell
-        args=["-File", "./scripts/start_server.ps1"],  # Run the startup script
-        env=env  # Pass environment variables
+        command="pwsh",
+        args=["-File", "./scripts/start_server.ps1"],
+        env=env,
     )
     
     # Use the client to start the server and connect to it

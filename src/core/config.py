@@ -27,12 +27,12 @@ class Settings(BaseSettings):
 
     # Databricks API configuration
     DATABRICKS_HOST: str = os.environ.get("DATABRICKS_HOST", "https://example.databricks.net")
-    DATABRICKS_TOKEN: str = os.environ.get("DATABRICKS_TOKEN", "dapi_token_placeholder")
+    DATABRICKS_TOKEN: Optional[str] = os.environ.get("DATABRICKS_TOKEN")
 
     # Server configuration
-    SERVER_HOST: str = os.environ.get("SERVER_HOST", "0.0.0.0") 
+    SERVER_HOST: str = os.environ.get("SERVER_HOST", "127.0.0.1")
     SERVER_PORT: int = int(os.environ.get("SERVER_PORT", "8000"))
-    DEBUG: bool = os.environ.get("DEBUG", "False").lower() == "true"
+    DEBUG: bool = False  # Never read from environment to prevent accidental auth bypass
 
     # Logging
     LOG_LEVEL: str = os.environ.get("LOG_LEVEL", "INFO")
@@ -56,6 +56,13 @@ class Settings(BaseSettings):
 
 # Create global settings instance
 settings = Settings()
+
+# Fail fast if credentials are not configured
+if not settings.DATABRICKS_TOKEN:
+    raise RuntimeError(
+        "DATABRICKS_TOKEN environment variable is not set. "
+        "Configure it before starting the server."
+    )
 
 
 def get_api_headers() -> Dict[str, str]:

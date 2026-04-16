@@ -14,9 +14,9 @@ dist/
 build/
 *.egg-info/
 
-# Local development settings
-.env
-.env.local
+# Local development settings — exclude all .env variants, keep only the example
+.env*
+!.env.example
 
 # IDE settings
 .idea/
